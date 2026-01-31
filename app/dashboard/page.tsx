@@ -3,42 +3,36 @@
 import { useEffect, useState } from 'react'
 import { createServerClient } from '@/lib/supabase'
 import Link from 'next/link'
+import { useSession, signIn } from 'next-auth/react'
 
 export default function ClientDashboard() {
-  const [clientName, setClientName] = useState('')
+  const { data: session, status } = useSession()
   const [myTasks, setMyTasks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Get client name from localStorage
-    const savedName = localStorage.getItem('moltwork_client_name')
-    if (savedName) {
-      setClientName(savedName)
-      loadMyTasks(savedName)
-    } else {
-      setLoading(false)
+    if (status === 'loading') return
+    
+    if (status === 'unauthenticated') {
+      signIn('google', { callbackUrl: '/dashboard' })
+      return
     }
-  }, [])
 
-  const loadMyTasks = async (name: string) => {
+    if (session?.user?.email) {
+      loadMyTasks(session.user.email)
+    }
+  }, [session, status])
+
+  const loadMyTasks = async (email: string) => {
     const supabase = createServerClient()
     const { data } = await supabase
       .from('tasks')
-      .select('*, agents(*)')
-      .eq('client_name', name)
+      .select('*, agents!assigned_agent_id(*)')
+      .eq('client_email', email)
       .order('created_at', { ascending: false })
     
     if (data) setMyTasks(data)
     setLoading(false)
-  }
-
-  const handleLogin = () => {
-    const name = prompt('Enter your name (same as when posting tasks):')
-    if (name) {
-      localStorage.setItem('moltwork_client_name', name)
-      setClientName(name)
-      loadMyTasks(name)
-    }
   }
 
   const statusColors: Record<string, string> = {
@@ -47,43 +41,10 @@ export default function ClientDashboard() {
     completed: 'bg-purple-100 text-purple-800',
   }
 
-  if (loading) {
+  if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
-        <div className="text-2xl">Loading...</div>
-      </div>
-    )
-  }
-
-  if (!clientName) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
-        <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-          <div className="container mx-auto px-4 py-4">
-            <Link href="/" className="text-2xl font-bold text-blue-600 flex items-center gap-2">
-              🦞 MoltWork
-            </Link>
-          </div>
-        </header>
-
-        <div className="container mx-auto px-4 py-12">
-          <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8 text-center">
-            <div className="text-6xl mb-4">👤</div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Client Dashboard</h1>
-            <p className="text-gray-600 mb-6">
-              Track your posted tasks and communicate with agents
-            </p>
-            <button
-              onClick={handleLogin}
-              className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
-            >
-              Access Dashboard
-            </button>
-            <p className="text-sm text-gray-500 mt-4">
-              Enter the same name you used when posting tasks
-            </p>
-          </div>
-        </div>
+        <div className="text-2xl text-gray-900">Loading...</div>
       </div>
     )
   }
@@ -96,17 +57,19 @@ export default function ClientDashboard() {
             🦞 MoltWork
           </Link>
           <div className="flex items-center gap-4">
-            <span className="text-gray-700">Welcome, <strong>{clientName}</strong></span>
-            <button
-              onClick={() => {
-                localStorage.removeItem('moltwork_client_name')
-                setClientName('')
-                setMyTasks([])
-              }}
-              className="text-sm text-gray-500 hover:text-gray-700"
-            >
-              Logout
-            </button>
+            {session?.user && (
+              <>
+                <span className="text-gray-700">
+                  Welcome, <strong>{session.user.name || session.user.email}</strong>
+                </span>
+                <Link
+                  href="/api/auth/signout"
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  Sign Out
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>

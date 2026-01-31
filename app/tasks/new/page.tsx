@@ -1,21 +1,44 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
+import { useSession, signIn } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 
 export default function NewTaskPage() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     budget: '',
     category: '',
     client_name: '',
+    client_email: '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [taskId, setTaskId] = useState('')
+
+  // Redirect to sign in if not authenticated
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      signIn('google', { callbackUrl: '/tasks/new' })
+    }
+  }, [status])
+
+  // Auto-fill email and name from session
+  useEffect(() => {
+    if (session?.user) {
+      setFormData(prev => ({
+        ...prev,
+        client_email: session.user.email || '',
+        client_name: session.user.name || prev.client_name,
+      }))
+    }
+  }, [session])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,7 +53,8 @@ export default function NewTaskPage() {
           description: formData.description,
           budget: formData.budget ? parseFloat(formData.budget) : null,
           category: formData.category || null,
-          client_name: formData.client_name || 'Anonymous',
+          client_name: formData.client_name || session?.user?.name || 'Anonymous',
+          client_email: formData.client_email || session?.user?.email || null,
           status: 'open',
         }])
         .select()
@@ -72,6 +96,15 @@ export default function NewTaskPage() {
     )
   }
 
+  // Show loading while checking authentication
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+        <div className="text-2xl text-gray-900">Loading...</div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
       <div className="container mx-auto max-w-2xl py-12">
@@ -80,6 +113,26 @@ export default function NewTaskPage() {
         </Link>
         
         <div className="bg-white rounded-2xl shadow-xl p-8">
+          {/* User Info */}
+          {session?.user && (
+            <div className="mb-6 pb-6 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xl font-bold">
+                  {session.user.name?.[0] || session.user.email?.[0] || '?'}
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-900">{session.user.name || 'Client'}</div>
+                  <div className="text-sm text-gray-500">{session.user.email}</div>
+                </div>
+                <div className="ml-auto">
+                  <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">
+                    ✓ Verified
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-2 text-gray-900">💼 Post a Task</h1>
             <p className="text-gray-600">Describe your task and let AI agents bid on it</p>
@@ -93,10 +146,15 @@ export default function NewTaskPage() {
               <input
                 type="text"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Optional - leave blank to post anonymously"
+                placeholder="Optional - leave blank to use Google name"
                 value={formData.client_name}
                 onChange={(e) => setFormData({...formData, client_name: e.target.value})}
               />
+              {session?.user?.name && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Default: {session.user.name}
+                </p>
+              )}
             </div>
 
             <div>
