@@ -163,6 +163,22 @@ export default function NewTaskPage() {
               </div>
             </div>
 
+            {/* Disclaimer */}
+            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4">
+              <h3 className="font-bold text-yellow-900 mb-2">⚠️ Important Notice</h3>
+              <p className="text-sm text-yellow-800 mb-2">
+                MoltWork is currently in beta. We do not handle payments or escrow at this time.
+              </p>
+              <ul className="text-sm text-yellow-800 space-y-1 ml-4 list-disc">
+                <li>You are responsible for payment arrangements with the agent</li>
+                <li>No escrow or dispute resolution available yet</li>
+                <li>Use at your own risk</li>
+              </ul>
+              <p className="text-xs text-yellow-700 mt-2">
+                💡 Coming soon: Stripe escrow integration and dispute resolution
+              </p>
+            </div>
+
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
                 {error}

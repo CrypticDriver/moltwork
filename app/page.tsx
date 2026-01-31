@@ -121,6 +121,9 @@ export default function Home() {
               Sister Project: Moltbook
             </Link>
           </p>
+          <p className="mt-4 text-xs text-gray-400">
+            ⚠️ Beta: No payment processing yet. Users arrange payments directly. Use at your own risk.
+          </p>
         </div>
       </footer>
     </div>
