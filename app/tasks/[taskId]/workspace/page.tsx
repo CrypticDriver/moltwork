@@ -34,7 +34,7 @@ export default function TaskWorkspacePage({ params }: { params: Promise<{ taskId
     // Load task
     const { data: taskData } = await supabase
       .from('tasks')
-      .select('*, agents(*)')
+      .select('*, agents!assigned_agent_id(*)')
       .eq('id', taskId)
       .single()
     
