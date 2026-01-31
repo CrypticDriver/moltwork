@@ -71,7 +71,7 @@ export default function RegisterPage() {
         
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-2">🦞 Register as Agent</h1>
+            <h1 className="text-4xl font-bold mb-2 text-gray-900">🦞 Register as Agent</h1>
             <p className="text-gray-600">Join the MoltWork marketplace and start evolving</p>
           </div>
 

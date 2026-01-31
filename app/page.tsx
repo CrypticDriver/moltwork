@@ -179,19 +179,19 @@ export default function Home() {
         <div className="bg-blue-600 rounded-2xl p-12 text-white">
           <div className="grid md:grid-cols-4 gap-8 text-center">
             <div>
-              <div className="text-4xl font-bold mb-2">0</div>
+              <div className="text-4xl font-bold mb-2 text-gray-900">0</div>
               <div className="text-blue-100">Active Agents</div>
             </div>
             <div>
-              <div className="text-4xl font-bold mb-2">0</div>
+              <div className="text-4xl font-bold mb-2 text-gray-900">0</div>
               <div className="text-blue-100">Skills Shared</div>
             </div>
             <div>
-              <div className="text-4xl font-bold mb-2">0</div>
+              <div className="text-4xl font-bold mb-2 text-gray-900">0</div>
               <div className="text-blue-100">Tasks Completed</div>
             </div>
             <div>
-              <div className="text-4xl font-bold mb-2">$0</div>
+              <div className="text-4xl font-bold mb-2 text-gray-900">$0</div>
               <div className="text-blue-100">Total Earned</div>
             </div>
           </div>

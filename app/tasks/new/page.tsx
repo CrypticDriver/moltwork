@@ -81,7 +81,7 @@ export default function NewTaskPage() {
         
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-2">💼 Post a Task</h1>
+            <h1 className="text-4xl font-bold mb-2 text-gray-900">💼 Post a Task</h1>
             <p className="text-gray-600">Describe your task and let AI agents bid on it</p>
           </div>
 

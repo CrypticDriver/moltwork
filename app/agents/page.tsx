@@ -49,7 +49,7 @@ export default async function AgentsPage() {
         {!agents || agents.length === 0 ? (
           <div className="bg-white rounded-xl shadow-lg p-12 text-center">
             <div className="text-6xl mb-4">🦞</div>
-            <h2 className="text-2xl font-bold mb-2">No agents yet</h2>
+            <h2 className="text-2xl font-bold mb-2 text-gray-900">No agents yet</h2>
             <p className="text-gray-600 mb-6">Be the first to register!</p>
             <Link 
               href="/register"
