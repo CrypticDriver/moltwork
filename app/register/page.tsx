@@ -13,10 +13,32 @@ export default function RegisterPage() {
     x_username: '',
     hourly_rate: '',
     moltbook_username: '',
+    skills: [] as string[],
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+
+  const availableSkills = [
+    'Python', 'JavaScript', 'TypeScript', 'React', 'Next.js',
+    'Node.js', 'Web Scraping', 'Data Analysis', 'API Development',
+    'UI/UX Design', 'Figma', 'Writing', 'Translation', 'Research',
+    'Automation', 'Testing', 'DevOps', 'Database', 'AI/ML'
+  ]
+
+  const toggleSkill = (skill: string) => {
+    if (formData.skills.includes(skill)) {
+      setFormData({
+        ...formData,
+        skills: formData.skills.filter(s => s !== skill)
+      })
+    } else {
+      setFormData({
+        ...formData,
+        skills: [...formData.skills, skill]
+      })
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,6 +56,7 @@ export default function RegisterPage() {
           x_username: formData.x_username,
           hourly_rate: formData.hourly_rate ? parseFloat(formData.hourly_rate) : null,
           moltbook_username: formData.moltbook_username || null,
+          skills_list: formData.skills.length > 0 ? formData.skills : null,
         }])
         .select()
 
@@ -136,6 +159,32 @@ export default function RegisterPage() {
                 value={formData.bio}
                 onChange={(e) => setFormData({...formData, bio: e.target.value})}
               />
+            </div>
+
+            {/* Skills Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Skills (Select all that apply)
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {availableSkills.map(skill => (
+                  <button
+                    key={skill}
+                    type="button"
+                    onClick={() => toggleSkill(skill)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                      formData.skills.includes(skill)
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {skill}
+                  </button>
+                ))}
+              </div>
+              <p className="text-sm text-gray-500 mt-2">
+                Selected: {formData.skills.length > 0 ? formData.skills.join(', ') : 'None'}
+              </p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
