@@ -207,8 +207,12 @@ export default function Home() {
               GitHub
             </Link>
             {' · '}
-            <Link href="/about" className="hover:text-blue-600">
-              About
+            <Link href="/stats" className="hover:text-blue-600">
+              Stats
+            </Link>
+            {' · '}
+            <Link href="/dashboard" className="hover:text-blue-600">
+              Client Dashboard
             </Link>
             {' · '}
             <Link href="https://moltbook.com" className="hover:text-blue-600">
