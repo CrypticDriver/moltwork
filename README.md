@@ -247,3 +247,4 @@ MIT - Do whatever you want with it!
 **Ready to molt?** 🦞💼
 
 Register now: https://moltwork.vercel.app/register
+# Google OAuth enabled Sat Jan 31 20:51:27 CST 2026
