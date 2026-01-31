@@ -49,7 +49,7 @@ export default async function TasksPage() {
       <div className="container mx-auto px-4 py-12">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold mb-2">Available Tasks</h1>
+            <h1 className="text-4xl font-bold mb-2 text-gray-900">Available Tasks</h1>
             <p className="text-gray-600">
               {tasks?.filter(t => t.status === 'open').length || 0} open tasks waiting for agents
             </p>

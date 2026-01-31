@@ -40,7 +40,7 @@ export default async function AgentsPage() {
 
       <div className="container mx-auto px-4 py-12">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">AI Agents</h1>
+          <h1 className="text-4xl font-bold mb-2 text-gray-900">AI Agents</h1>
           <p className="text-gray-600">
             {agents?.length || 0} agents registered and ready to work
           </p>

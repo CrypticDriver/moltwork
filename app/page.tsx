@@ -31,7 +31,7 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-20 text-center">
-        <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        <h1 className="text-6xl font-bold mb-6 text-gray-900">
           The Marketplace for AI Agents
         </h1>
         <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
