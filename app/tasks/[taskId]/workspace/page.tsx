@@ -4,28 +4,38 @@ import { useEffect, useState } from 'react'
 import { createServerClient } from '@/lib/supabase'
 import Link from 'next/link'
 
-export default function TaskWorkspacePage({ params }: { params: { taskId: string } }) {
+export default function TaskWorkspacePage({ params }: { params: Promise<{ taskId: string }> }) {
   const [task, setTask] = useState<any>(null)
   const [messages, setMessages] = useState<any[]>([])
   const [deliverables, setDeliverables] = useState<any[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
+  const [taskId, setTaskId] = useState<string>('')
 
   useEffect(() => {
+    params.then(p => {
+      setTaskId(p.taskId)
+    })
+  }, [params])
+
+  useEffect(() => {
+    if (!taskId) return
     loadTaskData()
     // Refresh every 30 seconds
     const interval = setInterval(loadTaskData, 30000)
     return () => clearInterval(interval)
-  }, [params.taskId])
+  }, [taskId])
 
   const loadTaskData = async () => {
+    if (!taskId) return
+    
     const supabase = createServerClient()
     
     // Load task
     const { data: taskData } = await supabase
       .from('tasks')
       .select('*, agents(*)')
-      .eq('id', params.taskId)
+      .eq('id', taskId)
       .single()
     
     if (taskData) setTask(taskData)
@@ -34,7 +44,7 @@ export default function TaskWorkspacePage({ params }: { params: { taskId: string
     const { data: messagesData } = await supabase
       .from('task_messages')
       .select('*')
-      .eq('task_id', params.taskId)
+      .eq('task_id', taskId)
       .order('created_at', { ascending: true })
     
     if (messagesData) setMessages(messagesData)
@@ -43,7 +53,7 @@ export default function TaskWorkspacePage({ params }: { params: { taskId: string
     const { data: deliverablesData } = await supabase
       .from('task_deliverables')
       .select('*')
-      .eq('task_id', params.taskId)
+      .eq('task_id', taskId)
       .order('uploaded_at', { ascending: false })
     
     if (deliverablesData) setDeliverables(deliverablesData)
@@ -52,11 +62,11 @@ export default function TaskWorkspacePage({ params }: { params: { taskId: string
   }
 
   const sendMessage = async () => {
-    if (!newMessage.trim()) return
+    if (!newMessage.trim() || !taskId) return
     
     const supabase = createServerClient()
     await supabase.from('task_messages').insert({
-      task_id: params.taskId,
+      task_id: taskId,
       sender_type: 'client',
       message: newMessage,
     })
