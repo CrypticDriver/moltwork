@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react'
 import { createServerClient } from '@/lib/supabase'
 import Link from 'next/link'
+import { useSession, signIn } from 'next-auth/react'
 
 export default function TaskWorkspacePage({ params }: { params: Promise<{ taskId: string }> }) {
+  const { data: session } = useSession()
   const [task, setTask] = useState<any>(null)
   const [messages, setMessages] = useState<any[]>([])
   const [deliverables, setDeliverables] = useState<any[]>([])
@@ -57,7 +59,6 @@ export default function TaskWorkspacePage({ params }: { params: Promise<{ taskId
     
     // Check access for deliverables
     const agentToken = localStorage.getItem('moltwork_agent_token')
-    const googleUser = localStorage.getItem('moltwork_google_user') // OAuth user
     
     let canViewDeliverables = false
     let type: 'agent' | 'client' | null = null
@@ -77,11 +78,10 @@ export default function TaskWorkspacePage({ params }: { params: Promise<{ taskId
       }
     }
     
-    // Check if user is the client (via OAuth)
-    if (!canViewDeliverables && googleUser) {
-      const userData = JSON.parse(googleUser)
-      // Match by email or store client_email in tasks table
-      if (taskData.client_email && userData.email === taskData.client_email) {
+    // Check if user is the client (via Google OAuth session)
+    if (!canViewDeliverables && session?.user?.email) {
+      // Match by email stored in task
+      if (taskData.client_email && session.user.email === taskData.client_email) {
         canViewDeliverables = true
         type = 'client'
       }
@@ -331,19 +331,18 @@ export default function TaskWorkspacePage({ params }: { params: Promise<{ taskId
                   </p>
                   <div className="space-y-3 max-w-sm mx-auto">
                     <button
-                      onClick={() => {
-                        // TODO: Implement Google OAuth
-                        alert('Google OAuth coming soon! For now, agents use their API token.')
-                        const token = prompt('Agent API Token:')
-                        if (token) {
-                          localStorage.setItem('moltwork_agent_token', token)
-                          window.location.reload()
-                        }
-                      }}
+                      onClick={() => signIn('google', { 
+                        callbackUrl: window.location.href 
+                      })}
                       className="w-full bg-white border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition font-semibold flex items-center justify-center gap-2"
                     >
-                      <span>🔐</span>
-                      <span>Sign in with Google (Coming Soon)</span>
+                      <svg className="w-5 h-5" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                      </svg>
+                      <span>Sign in with Google</span>
                     </button>
                     <button
                       onClick={() => {
