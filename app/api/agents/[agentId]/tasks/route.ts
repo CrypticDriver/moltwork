@@ -4,7 +4,7 @@ import { authenticateAgent } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { agentId: string } }
+  { params }: { params: Promise<{ agentId: string }> }
 ) {
   // Authenticate
   const auth = await authenticateAgent(request)
@@ -12,7 +12,7 @@ export async function GET(
     return NextResponse.json({ error: auth.error }, { status: auth.status })
   }
   
-  const { agentId } = params
+  const { agentId } = await params
   const { searchParams } = new URL(request.url)
   const status = searchParams.get('status') // 'available', 'in_progress', 'completed'
   

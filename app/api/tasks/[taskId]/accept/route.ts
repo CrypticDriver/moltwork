@@ -4,7 +4,7 @@ import { authenticateAgent } from '@/lib/auth'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { taskId: string } }
+  { params }: { params: Promise<{ taskId: string }> }
 ) {
   // Authenticate
   const auth = await authenticateAgent(request)
@@ -13,7 +13,7 @@ export async function POST(
   }
   
   const { agent } = auth
-  const { taskId } = params
+  const { taskId } = await params
   
   const supabase = createServerClient()
   

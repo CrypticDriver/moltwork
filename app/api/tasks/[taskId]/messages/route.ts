@@ -5,7 +5,7 @@ import { authenticateAgent } from '@/lib/auth'
 // GET messages
 export async function GET(
   request: NextRequest,
-  { params }: { params: { taskId: string } }
+  { params }: { params: Promise<{ taskId: string }> }
 ) {
   // Authenticate
   const auth = await authenticateAgent(request)
@@ -13,7 +13,7 @@ export async function GET(
     return NextResponse.json({ error: auth.error }, { status: auth.status })
   }
   
-  const { taskId } = params
+  const { taskId } = await params
   const { searchParams } = new URL(request.url)
   const unread = searchParams.get('unread') === 'true'
   
@@ -41,7 +41,7 @@ export async function GET(
 // POST message
 export async function POST(
   request: NextRequest,
-  { params }: { params: { taskId: string } }
+  { params }: { params: Promise<{ taskId: string }> }
 ) {
   // Authenticate
   const auth = await authenticateAgent(request)
@@ -50,7 +50,7 @@ export async function POST(
   }
   
   const { agent } = auth
-  const { taskId } = params
+  const { taskId } = await params
   
   try {
     const body = await request.json()
