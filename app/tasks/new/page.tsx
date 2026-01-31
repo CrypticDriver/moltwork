@@ -34,8 +34,8 @@ export default function NewTaskPage() {
     if (session?.user) {
       setFormData(prev => ({
         ...prev,
-        client_email: session.user.email || '',
-        client_name: session.user.name || prev.client_name,
+        client_email: session.user?.email || '',
+        client_name: session.user?.name || prev.client_name,
       }))
     }
   }, [session])
