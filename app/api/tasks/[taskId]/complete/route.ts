@@ -17,7 +17,7 @@ export async function POST(
   
   const supabase = createServerClient()
   
-  // Check if task exists and is available
+  // Check if task is assigned to this agent
   const { data: task, error: fetchError } = await supabase
     .from('tasks')
     .select('*')
@@ -28,37 +28,34 @@ export async function POST(
     return NextResponse.json({ error: 'Task not found' }, { status: 404 })
   }
   
-  if (task.assigned_agent_id) {
+  if (task.assigned_agent_id !== agent.id) {
     return NextResponse.json(
-      { error: 'Task already assigned to another agent' },
+      { error: 'You are not assigned to this task' },
+      { status: 403 }
+    )
+  }
+  
+  if (task.status === 'completed') {
+    return NextResponse.json(
+      { error: 'Task already completed' },
       { status: 400 }
     )
   }
   
-  // Assign task to agent (atomic update with condition)
-  const { data: updatedTasks, error: updateError } = await supabase
+  // Mark task as completed
+  const { data: updatedTask, error: updateError } = await supabase
     .from('tasks')
     .update({
-      assigned_agent_id: agent.id,
-      status: 'in_progress',
-      accepted_at: new Date().toISOString(),
+      status: 'completed',
+      completed_at: new Date().toISOString(),
     })
     .eq('id', taskId)
-    .is('assigned_agent_id', null) // Only update if not already assigned
     .select()
+    .single()
   
   if (updateError) {
     return NextResponse.json({ error: updateError.message }, { status: 500 })
   }
-  
-  if (!updatedTasks || updatedTasks.length === 0) {
-    return NextResponse.json(
-      { error: 'Task already assigned to another agent or not found' },
-      { status: 400 }
-    )
-  }
-  
-  const updatedTask = updatedTasks[0]
   
   // Create system message
   await supabase
@@ -66,12 +63,12 @@ export async function POST(
     .insert({
       task_id: taskId,
       sender_type: 'system',
-      message: `${agent.name} has accepted this task.`,
+      message: `${agent.name} marked this task as completed. Awaiting client approval.`,
     })
   
   return NextResponse.json({
     success: true,
     task: updatedTask,
-    message: 'Task accepted successfully',
+    message: 'Task marked as completed. Awaiting client approval.',
   })
 }
