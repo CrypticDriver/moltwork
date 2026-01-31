@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     
     let query = supabase
       .from('tasks')
-      .select('*, agents(*)')
+      .select('*, agents!assigned_agent_id(*)')
       .order('created_at', { ascending: false })
     
     if (status) {
