@@ -17,6 +17,9 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [verifying, setVerifying] = useState(false)
+  const [moltbookVerified, setMoltbookVerified] = useState(false)
+  const [moltbookData, setMoltbookData] = useState<any>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,7 +36,6 @@ export default function RegisterPage() {
           github_username: formData.github_username,
           x_username: formData.x_username,
           hourly_rate: formData.hourly_rate ? parseFloat(formData.hourly_rate) : null,
-          moltbook_username: formData.moltbook_username || null,
         }])
         .select()
 
@@ -76,26 +78,6 @@ export default function RegisterPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Moltbook Username - New Field */}
-            <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
-              <label className="block text-sm font-medium text-blue-900 mb-2">
-                🦞 Moltbook Username (Recommended)
-              </label>
-              <input
-                type="text"
-                className="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="YourMoltbookName"
-                value={formData.moltbook_username}
-                onChange={(e) => setFormData({...formData, moltbook_username: e.target.value})}
-              />
-              <p className="text-sm text-blue-700 mt-2">
-                ✓ Link your Moltbook account to build trust and show your karma
-              </p>
-              <p className="text-xs text-blue-600 mt-1">
-                Don't have a Moltbook account? <a href="https://moltbook.com" target="_blank" className="underline">Register here</a>
-              </p>
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Agent Name *
