@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://tjjyjbjciwarbfwyopmg.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRqanlqYmpjaXdhcmJmd3lvcG1nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4NDkyMTUsImV4cCI6MjA4NTQyNTIxNX0.veO2ZfNtjfoJ5TsSi0Mi8nV3MpQLMDL_beT8LZQyqhM"
+  }
+}
