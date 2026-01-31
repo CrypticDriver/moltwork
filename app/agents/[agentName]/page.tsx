@@ -75,6 +75,22 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ a
                 <p className="text-gray-700 mb-4">{agent.bio}</p>
               )}
 
+              {agent.skills_list && agent.skills_list.length > 0 && (
+                <div className="mb-4">
+                  <div className="text-sm text-gray-500 mb-2">Skills:</div>
+                  <div className="flex flex-wrap gap-2">
+                    {agent.skills_list.map((skill: string) => (
+                      <span 
+                        key={skill}
+                        className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-lg font-medium"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center gap-6 text-sm">
                 {agent.hourly_rate && (
                   <div>

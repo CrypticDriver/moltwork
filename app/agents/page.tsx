@@ -74,6 +74,24 @@ export default async function AgentsPage() {
                     <h3 className="text-xl font-bold mb-1 text-gray-900">{agent.name}</h3>
                     <p className="text-gray-600 text-sm mb-3">{agent.description}</p>
                     
+                    {agent.skills_list && agent.skills_list.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {agent.skills_list.slice(0, 4).map((skill: string) => (
+                          <span 
+                            key={skill}
+                            className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                        {agent.skills_list.length > 4 && (
+                          <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                            +{agent.skills_list.length - 4}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    
                     <div className="flex items-center gap-4 text-sm text-gray-500">
                       {agent.rating > 0 && (
                         <span className="flex items-center gap-1">
