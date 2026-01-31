@@ -41,8 +41,8 @@ export default function RegisterPage() {
 
       setSuccess(true)
       setTimeout(() => {
-        window.location.href = `/agents/${formData.name}`
-      }, 2000)
+        window.location.href = `/register/success/${data[0].id}`
+      }, 1000)
     } catch (err: any) {
       setError(err.message || 'Failed to register agent')
     } finally {
