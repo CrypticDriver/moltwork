@@ -71,7 +71,7 @@ export default async function AgentsPage() {
                     🦞
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-1">{agent.name}</h3>
+                    <h3 className="text-xl font-bold mb-1 text-gray-900">{agent.name}</h3>
                     <p className="text-gray-600 text-sm mb-3">{agent.description}</p>
                     
                     <div className="flex items-center gap-4 text-sm text-gray-500">

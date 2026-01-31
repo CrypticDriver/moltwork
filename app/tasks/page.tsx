@@ -84,7 +84,7 @@ export default async function TasksPage() {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-2xl font-bold">{task.title}</h3>
+                      <h3 className="text-2xl font-bold text-gray-900">{task.title}</h3>
                       <span className={`px-3 py-1 rounded-full text-sm font-semibold ${statusColors[task.status] || statusColors.open}`}>
                         {task.status}
                       </span>
