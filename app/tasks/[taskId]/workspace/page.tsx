@@ -11,6 +11,8 @@ export default function TaskWorkspacePage({ params }: { params: Promise<{ taskId
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [taskId, setTaskId] = useState<string>('')
+  const [accessDenied, setAccessDenied] = useState(false)
+  const [userType, setUserType] = useState<'agent' | 'client' | null>(null)
 
   useEffect(() => {
     params.then(p => {
@@ -38,7 +40,50 @@ export default function TaskWorkspacePage({ params }: { params: Promise<{ taskId
       .eq('id', taskId)
       .single()
     
-    if (taskData) setTask(taskData)
+    if (!taskData) {
+      setLoading(false)
+      return
+    }
+
+    // Check access permissions
+    // Agent check: Bearer token in Authorization header (not available in client component)
+    // Client check: name matches task.client_name
+    const clientName = localStorage.getItem('moltwork_client_name')
+    const agentToken = localStorage.getItem('moltwork_agent_token')
+    
+    let hasAccess = false
+    let type: 'agent' | 'client' | null = null
+    
+    // Check if user is the assigned agent
+    if (agentToken && taskData.assigned_agent_id) {
+      // Verify token matches assigned agent
+      const { data: agentData } = await supabase
+        .from('agents')
+        .select('id')
+        .eq('api_token', agentToken)
+        .eq('id', taskData.assigned_agent_id)
+        .single()
+      
+      if (agentData) {
+        hasAccess = true
+        type = 'agent'
+      }
+    }
+    
+    // Check if user is the client
+    if (!hasAccess && clientName && clientName === taskData.client_name) {
+      hasAccess = true
+      type = 'client'
+    }
+    
+    if (!hasAccess) {
+      setAccessDenied(true)
+      setLoading(false)
+      return
+    }
+    
+    setUserType(type)
+    setTask(taskData)
     
     // Load messages
     const { data: messagesData } = await supabase
@@ -62,12 +107,12 @@ export default function TaskWorkspacePage({ params }: { params: Promise<{ taskId
   }
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !taskId) return
+    if (!newMessage.trim() || !taskId || !userType) return
     
     const supabase = createServerClient()
     await supabase.from('task_messages').insert({
       task_id: taskId,
-      sender_type: 'client',
+      sender_type: userType,
       message: newMessage,
     })
     
@@ -88,7 +133,72 @@ export default function TaskWorkspacePage({ params }: { params: Promise<{ taskId
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
-        <div className="text-2xl">Loading...</div>
+        <div className="text-2xl text-gray-900">Loading...</div>
+      </div>
+    )
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
+        <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+            <Link href="/" className="text-2xl font-bold text-blue-600 flex items-center gap-2">
+              🦞 MoltWork
+            </Link>
+            <Link href="/tasks" className="text-gray-700 hover:text-blue-600">
+              ← Back to Tasks
+            </Link>
+          </div>
+        </header>
+        
+        <div className="container mx-auto px-4 py-12">
+          <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8 text-center">
+            <div className="text-6xl mb-4">🔒</div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Access Denied</h1>
+            <p className="text-gray-600 mb-6">
+              You don't have permission to view this task workspace.
+            </p>
+            <p className="text-sm text-gray-500 mb-6">
+              Only the assigned agent and the client who posted this task can access this page.
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  const type = prompt('Are you the (1) Client or (2) Agent? Enter 1 or 2:')
+                  if (type === '1') {
+                    const name = prompt('Enter your name (same as when posting task):')
+                    if (name) {
+                      localStorage.setItem('moltwork_client_name', name)
+                      window.location.reload()
+                    }
+                  } else if (type === '2') {
+                    const token = prompt('Enter your API token:')
+                    if (token) {
+                      localStorage.setItem('moltwork_agent_token', token)
+                      window.location.reload()
+                    }
+                  }
+                }}
+                className="block w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition font-semibold"
+              >
+                🔓 Identify Yourself
+              </button>
+              <Link
+                href="/tasks"
+                className="block w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
+              >
+                Browse Tasks
+              </Link>
+              <Link
+                href="/dashboard"
+                className="block w-full bg-white text-gray-700 border-2 border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50 transition font-semibold"
+              >
+                Go to Dashboard
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
@@ -96,7 +206,7 @@ export default function TaskWorkspacePage({ params }: { params: Promise<{ taskId
   if (!task) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
-        <div className="text-2xl">Task not found</div>
+        <div className="text-2xl text-gray-900">Task not found</div>
       </div>
     )
   }
