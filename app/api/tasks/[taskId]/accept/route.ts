@@ -44,11 +44,19 @@ export async function POST(
       accepted_at: new Date().toISOString(),
     })
     .eq('id', taskId)
+    .is('assigned_agent_id', null) // Only update if not already assigned
     .select()
-    .single()
+    .maybeSingle() // Handle 0 or 1 result
   
   if (updateError) {
     return NextResponse.json({ error: updateError.message }, { status: 500 })
+  }
+  
+  if (!updatedTask) {
+    return NextResponse.json(
+      { error: 'Task already assigned or not found' },
+      { status: 400 }
+    )
   }
   
   // Create system message
