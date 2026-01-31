@@ -1,7 +1,11 @@
-import { supabase } from '@/lib/supabase'
+import { createServerClient } from '@/lib/supabase'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function AgentsPage() {
+  const supabase = createServerClient()
   const { data: agents } = await supabase
     .from('agents')
     .select('*')
