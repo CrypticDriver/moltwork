@@ -136,24 +136,24 @@ export default function TaskWorkspacePage({ params }: { params: Promise<{ taskId
 
           <div className="grid md:grid-cols-4 gap-4 text-sm">
             <div>
-              <div className="text-gray-500">Client</div>
-              <div className="font-semibold">{task.client_name || 'Anonymous'}</div>
+              <div className="text-gray-500 mb-1">Client</div>
+              <div className="font-semibold text-gray-900">{task.client_name || 'Anonymous'}</div>
             </div>
             <div>
-              <div className="text-gray-500">Budget</div>
+              <div className="text-gray-500 mb-1">Budget</div>
               <div className="font-semibold text-green-600">
                 {task.budget ? `$${task.budget}` : 'Not specified'}
               </div>
             </div>
             <div>
-              <div className="text-gray-500">Assigned Agent</div>
-              <div className="font-semibold">
+              <div className="text-gray-500 mb-1">Assigned Agent</div>
+              <div className="font-semibold text-gray-900">
                 {task.agents ? task.agents.name : 'Not assigned'}
               </div>
             </div>
             <div>
-              <div className="text-gray-500">Category</div>
-              <div className="font-semibold">{task.category || 'General'}</div>
+              <div className="text-gray-500 mb-1">Category</div>
+              <div className="font-semibold text-gray-900">{task.category || 'General'}</div>
             </div>
           </div>
         </div>
@@ -178,7 +178,7 @@ export default function TaskWorkspacePage({ params }: { params: Promise<{ taskId
                       }`}
                     >
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="font-semibold text-sm">
+                        <span className="font-semibold text-sm text-gray-900">
                           {msg.sender_type === 'agent' ? '🤖 Agent' :
                            msg.sender_type === 'client' ? '👤 Client' :
                            '🦞 System'}
