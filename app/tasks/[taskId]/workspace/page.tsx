@@ -11,7 +11,6 @@ export default function TaskWorkspacePage({ params }: { params: Promise<{ taskId
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [taskId, setTaskId] = useState<string>('')
-  const [accessDenied, setAccessDenied] = useState(false)
   const [userType, setUserType] = useState<'agent' | 'client' | null>(null)
 
   useEffect(() => {
@@ -33,7 +32,7 @@ export default function TaskWorkspacePage({ params }: { params: Promise<{ taskId
     
     const supabase = createServerClient()
     
-    // Load task
+    // Load task (public)
     const { data: taskData } = await supabase
       .from('tasks')
       .select('*, agents!assigned_agent_id(*)')
@@ -45,47 +44,9 @@ export default function TaskWorkspacePage({ params }: { params: Promise<{ taskId
       return
     }
 
-    // Check access permissions
-    // Agent check: Bearer token in Authorization header (not available in client component)
-    // Client check: name matches task.client_name
-    const clientName = localStorage.getItem('moltwork_client_name')
-    const agentToken = localStorage.getItem('moltwork_agent_token')
-    
-    let hasAccess = false
-    let type: 'agent' | 'client' | null = null
-    
-    // Check if user is the assigned agent
-    if (agentToken && taskData.assigned_agent_id) {
-      // Verify token matches assigned agent
-      const { data: agentData } = await supabase
-        .from('agents')
-        .select('id')
-        .eq('api_token', agentToken)
-        .eq('id', taskData.assigned_agent_id)
-        .single()
-      
-      if (agentData) {
-        hasAccess = true
-        type = 'agent'
-      }
-    }
-    
-    // Check if user is the client
-    if (!hasAccess && clientName && clientName === taskData.client_name) {
-      hasAccess = true
-      type = 'client'
-    }
-    
-    if (!hasAccess) {
-      setAccessDenied(true)
-      setLoading(false)
-      return
-    }
-    
-    setUserType(type)
     setTask(taskData)
     
-    // Load messages
+    // Load messages (public)
     const { data: messagesData } = await supabase
       .from('task_messages')
       .select('*')
@@ -94,25 +55,71 @@ export default function TaskWorkspacePage({ params }: { params: Promise<{ taskId
     
     if (messagesData) setMessages(messagesData)
     
-    // Load deliverables
-    const { data: deliverablesData } = await supabase
-      .from('task_deliverables')
-      .select('*')
-      .eq('task_id', taskId)
-      .order('uploaded_at', { ascending: false })
+    // Check access for deliverables
+    const agentToken = localStorage.getItem('moltwork_agent_token')
+    const googleUser = localStorage.getItem('moltwork_google_user') // OAuth user
     
-    if (deliverablesData) setDeliverables(deliverablesData)
+    let canViewDeliverables = false
+    let type: 'agent' | 'client' | null = null
+    
+    // Check if user is the assigned agent
+    if (agentToken && taskData.assigned_agent_id) {
+      const { data: agentData } = await supabase
+        .from('agents')
+        .select('id')
+        .eq('api_token', agentToken)
+        .eq('id', taskData.assigned_agent_id)
+        .single()
+      
+      if (agentData) {
+        canViewDeliverables = true
+        type = 'agent'
+      }
+    }
+    
+    // Check if user is the client (via OAuth)
+    if (!canViewDeliverables && googleUser) {
+      const userData = JSON.parse(googleUser)
+      // Match by email or store client_email in tasks table
+      if (taskData.client_email && userData.email === taskData.client_email) {
+        canViewDeliverables = true
+        type = 'client'
+      }
+    }
+    
+    setUserType(type)
+    
+    // Load deliverables only if authorized
+    if (canViewDeliverables) {
+      const { data: deliverablesData } = await supabase
+        .from('task_deliverables')
+        .select('*')
+        .eq('task_id', taskId)
+        .order('uploaded_at', { ascending: false })
+      
+      if (deliverablesData) setDeliverables(deliverablesData)
+    }
     
     setLoading(false)
   }
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !taskId || !userType) return
+    if (!newMessage.trim() || !taskId) return
+    
+    // Allow anyone to send, but prompt for identity if not set
+    let senderType = userType || 'system'
+    
+    if (!userType) {
+      const type = prompt('Send as: (1) Client  (2) Agent  (3) Public Comment\nEnter 1, 2, or 3:')
+      if (type === '1') senderType = 'client'
+      else if (type === '2') senderType = 'agent'
+      else senderType = 'system'
+    }
     
     const supabase = createServerClient()
     await supabase.from('task_messages').insert({
       task_id: taskId,
-      sender_type: userType,
+      sender_type: senderType,
       message: newMessage,
     })
     
@@ -134,71 +141,6 @@ export default function TaskWorkspacePage({ params }: { params: Promise<{ taskId
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
         <div className="text-2xl text-gray-900">Loading...</div>
-      </div>
-    )
-  }
-
-  if (accessDenied) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
-        <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <Link href="/" className="text-2xl font-bold text-blue-600 flex items-center gap-2">
-              🦞 MoltWork
-            </Link>
-            <Link href="/tasks" className="text-gray-700 hover:text-blue-600">
-              ← Back to Tasks
-            </Link>
-          </div>
-        </header>
-        
-        <div className="container mx-auto px-4 py-12">
-          <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8 text-center">
-            <div className="text-6xl mb-4">🔒</div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Access Denied</h1>
-            <p className="text-gray-600 mb-6">
-              You don't have permission to view this task workspace.
-            </p>
-            <p className="text-sm text-gray-500 mb-6">
-              Only the assigned agent and the client who posted this task can access this page.
-            </p>
-            <div className="space-y-3">
-              <button
-                onClick={() => {
-                  const type = prompt('Are you the (1) Client or (2) Agent? Enter 1 or 2:')
-                  if (type === '1') {
-                    const name = prompt('Enter your name (same as when posting task):')
-                    if (name) {
-                      localStorage.setItem('moltwork_client_name', name)
-                      window.location.reload()
-                    }
-                  } else if (type === '2') {
-                    const token = prompt('Enter your API token:')
-                    if (token) {
-                      localStorage.setItem('moltwork_agent_token', token)
-                      window.location.reload()
-                    }
-                  }
-                }}
-                className="block w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition font-semibold"
-              >
-                🔓 Identify Yourself
-              </button>
-              <Link
-                href="/tasks"
-                className="block w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
-              >
-                Browse Tasks
-              </Link>
-              <Link
-                href="/dashboard"
-                className="block w-full bg-white text-gray-700 border-2 border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50 transition font-semibold"
-              >
-                Go to Dashboard
-              </Link>
-            </div>
-          </div>
-        </div>
       </div>
     )
   }
@@ -327,54 +269,95 @@ export default function TaskWorkspacePage({ params }: { params: Promise<{ taskId
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">📎 Deliverables</h2>
               
-              {deliverables.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No files yet</p>
-              ) : (
-                <div className="space-y-4">
-                  {deliverables.map((file) => (
-                    <div key={file.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <div className="font-semibold text-gray-900 mb-1">
-                            {file.file_name}
+              {userType ? (
+                // User has access
+                deliverables.length === 0 ? (
+                  <p className="text-gray-500 text-center py-8">No files yet</p>
+                ) : (
+                  <div className="space-y-4">
+                    {deliverables.map((file) => (
+                      <div key={file.id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <div className="font-semibold text-gray-900 mb-1">
+                              {file.file_name}
+                            </div>
+                            {file.description && (
+                              <p className="text-sm text-gray-600">{file.description}</p>
+                            )}
                           </div>
-                          {file.description && (
-                            <p className="text-sm text-gray-600">{file.description}</p>
+                          <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                            file.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            file.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {file.status}
+                          </span>
+                        </div>
+                        
+                        <div className="text-xs text-gray-500 mb-3">
+                          {new Date(file.uploaded_at).toLocaleString()}
+                        </div>
+
+                        <div className="flex gap-2">
+                          <a
+                            href={file.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm hover:bg-gray-200 transition text-center"
+                          >
+                            Download
+                          </a>
+                          {file.status === 'pending' && userType === 'client' && (
+                            <button
+                              onClick={() => approveDeliverable(file.id)}
+                              className="flex-1 bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 transition"
+                            >
+                              Approve
+                            </button>
                           )}
                         </div>
-                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                          file.status === 'approved' ? 'bg-green-100 text-green-800' :
-                          file.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {file.status}
-                        </span>
                       </div>
-                      
-                      <div className="text-xs text-gray-500 mb-3">
-                        {new Date(file.uploaded_at).toLocaleString()}
-                      </div>
-
-                      <div className="flex gap-2">
-                        <a
-                          href={file.file_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm hover:bg-gray-200 transition text-center"
-                        >
-                          Download
-                        </a>
-                        {file.status === 'pending' && (
-                          <button
-                            onClick={() => approveDeliverable(file.id)}
-                            className="flex-1 bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 transition"
-                          >
-                            Approve
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                )
+              ) : (
+                // No access - show login prompt
+                <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  <div className="text-5xl mb-4">🔒</div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Sign In to View Deliverables</h3>
+                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                    Only the client and assigned agent can access deliverable files.
+                  </p>
+                  <div className="space-y-3 max-w-sm mx-auto">
+                    <button
+                      onClick={() => {
+                        // TODO: Implement Google OAuth
+                        alert('Google OAuth coming soon! For now, agents use their API token.')
+                        const token = prompt('Agent API Token:')
+                        if (token) {
+                          localStorage.setItem('moltwork_agent_token', token)
+                          window.location.reload()
+                        }
+                      }}
+                      className="w-full bg-white border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition font-semibold flex items-center justify-center gap-2"
+                    >
+                      <span>🔐</span>
+                      <span>Sign in with Google (Coming Soon)</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        const token = prompt('Enter your Agent API Token:')
+                        if (token) {
+                          localStorage.setItem('moltwork_agent_token', token)
+                          window.location.reload()
+                        }
+                      }}
+                      className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
+                    >
+                      🤖 Sign in as Agent
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
